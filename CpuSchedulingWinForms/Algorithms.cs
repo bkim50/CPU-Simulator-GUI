@@ -1,14 +1,176 @@
-﻿using System;
+﻿/*
+ *  Project Two: CPU Scheduler
+ *  Name: Brien Kim
+ *  Course: CS 3502 Section W03
+ *  Net ID: bkim50
+ *  
+ *  For this project, two advanced scheduling algorithms are added into this file (Algorithms.cs):
+ *  - Shortest Remaining Time First (SRTF): preemptive version of Shortest Job First (SJF)
+ */
+
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 
 namespace CpuSchedulingWinForms
 {
     public static class Algorithms
     {
+
+        // declare the Process class to efficienty manage each process
+        private class Process
+        {
+            // attributes that represent basic information for each process
+            public int id;
+            static int tracking_id;
+            public int arrival_time;
+            public int burst_time;
+
+            // attribute that represent information for calculation and comparison
+            public int remaining_burst_time;
+            public int completion_time;
+            // turnaround_time = completion_time - arrival_time
+            public int turnaround_time;
+            // waiting_time = turnaround_time - burst_time
+            public int waiting_time;
+
+            // overloaded constructor, take required inputs from a user
+            public Process(int arrival_time, int burst_time)
+            {
+                this.id = ++tracking_id;
+                this.arrival_time = arrival_time;
+                this.burst_time = burst_time;
+                this.remaining_burst_time = burst_time;
+            }
+        }
+        
+        // Shortest Remaining Time First(SRTF) Algorithm
+        public static void srtfAlgorithm(string userInput)
+        {
+            PerformanceCounter cpu = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+            // initialize number of process and an array to store processes
+            int number_of_process = Convert.ToInt16(userInput);
+            Process[] waiting_processes = new Process[number_of_process];
+
+            // retrieve a user's confirmation to operate SRTF algorithm
+            DialogResult result = MessageBox.Show("Shortest Remaining Time First Scheduling ", "", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+           
+            // if a user does not confirm, then terminate the method
+            if (result != DialogResult.Yes)
+            {
+                return;
+            }
+
+            // for number of process, prompt a user for arrival time and burst time for each process
+            // then add each process to the array
+            for (int i = 0; i < number_of_process; i++)
+            {
+                string arrival_time = Microsoft.VisualBasic.Interaction.InputBox("Enter Arrival Time: ", "Arrival Time for P" + (i + 1), "", -1, -1);
+                string burst_time = Microsoft.VisualBasic.Interaction.InputBox("Enter Burst Time: ", "Burst Time for P" + (i + 1), "", -1, -1);
+
+                waiting_processes[i] = new Process(Convert.ToInt32(arrival_time), Convert.ToInt32(burst_time));
+            }
+
+            // sort the array from earliest arrival time to latest arrival time
+            // - if there are multiple processes with the same arrival time,
+            //   then still these will be sorted by burst time
+            // - if all processes have the same arrival time and the same burst time,
+            //   then processes will be performed in order of their addition to the array
+            waiting_processes = waiting_processes.OrderBy(process => process.arrival_time)
+                                                 .ThenBy(process => process.burst_time)
+                                                 .ToArray();
+
+            // track number of completed process and time past
+            int number_of_completed_process = 0;
+            int current_time = 0;
+
+            // while there is an un-completed process, continue performing the algorithm
+            while (number_of_completed_process < number_of_process)
+            {
+                // initially, there is no current process due to the possibility of an idle period 
+                int current_process_index = -1;
+
+                // for the number of process,
+                // - if there is an availble process (while there is no current process),
+                //   then re-initialze the process as the current process
+                // - if there is a process whose arrival time is within the current time,
+                //   whose remaining burst time is greater than 0 and less than the current process' remaining burst time,
+                //   then swap the current process with the process
+                for (int i = 0; i < waiting_processes.Length; i++)
+                {
+                    Process process = waiting_processes[i];
+                    if (process.arrival_time <= current_time && 
+                        process.remaining_burst_time > 0 &&
+                        (current_process_index == -1 ||
+                        process.remaining_burst_time < waiting_processes[current_process_index].remaining_burst_time))
+                    {
+                        current_process_index = i;
+                    }
+                }
+
+                // if there is an idle period (current_process_index == -1),
+                // then skip the below operations (by continue keyword) and increment the current time by 1
+                if (current_process_index == -1)
+                {
+                    current_time++;
+                    continue;
+                }
+
+                // otherwise (if there is no idle period),
+                // - increment the current time by 1
+                // - decrement the current process' remaining burst time by 1
+                current_time++;
+                Process current_process = waiting_processes[current_process_index];
+
+                // if calculated remaining burst time is 0 (meaning the process is completed),
+                // then re-initialize its completion time and calculat its turnaround time and waiting time
+                // lastly, increment the number of completed process by 1
+                if (--current_process.remaining_burst_time == 0)
+                {
+                    current_process.completion_time = current_time;
+
+                    // turnaround_time = completion_time - arrival_time
+                    current_process.turnaround_time = current_process.completion_time - current_process.arrival_time;
+                    // waiting_time = turnaround_time - burst_time
+                    current_process.waiting_time = current_process.turnaround_time - current_process.burst_time;
+
+                    number_of_completed_process++;
+                }
+            }
+
+            // after all processes are completed,
+            // calculate average turnaround time (ATT) and average waiting time (AWT)
+            double average_turnaround_time = 0;
+            double average_waiting_time = 0;
+
+            foreach (Process process in waiting_processes)
+            {
+                average_turnaround_time += process.turnaround_time;
+                average_waiting_time += process.waiting_time;
+            }
+
+            average_turnaround_time /= number_of_process;
+            average_waiting_time /= number_of_process;
+
+            // calculate throughput (Processes per Second)
+            // throughput = [total number of completed processes] / [overall completed time]
+            double throughput = number_of_completed_process / current_time;
+            
+            MessageBox.Show("Waiting time for P" + ( 1) + " = " + current_time + "%", "Job Queue", MessageBoxButtons.OK, MessageBoxIcon.None);
+        }
+
+        /*
+         *  initially,four basic CPU scheduling algorithms are implemented in this file:
+         *  - First Come, First Served (FCFS)
+         *  - Shortest Job First (SJF)
+         *  - Round Robin (RR)
+         *  - Priority Scheduling
+         */
         public static void fcfsAlgorithm(string userInput)
         {
             int np = Convert.ToInt16(userInput);
