@@ -1,4 +1,14 @@
-﻿namespace CpuSchedulingWinForms
+﻿/*
+ *  Project Two: CPU Scheduler
+ *  Name: Brien Kim
+ *  Course: CS 3502 Section W03
+ *  Net ID: bkim50
+ *  
+ *  For this file (CpuScheduler.Designer.cs), 
+ *  - add new button components for two advanced scheduling algorithms (SRTF and HRRN) added into the file (Algorithms.cs):
+ */
+
+namespace CpuSchedulingWinForms
 {
     partial class CpuScheduler
     {
@@ -49,6 +59,11 @@
             this.pictureBox4 = new System.Windows.Forms.PictureBox();
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.cpuSchedulerTab = new System.Windows.Forms.TabPage();
+
+            // initialize newly added buttons
+            this.btnHRRN = new System.Windows.Forms.Button();
+            this.btnSRTF = new System.Windows.Forms.Button();
+
             this.btnRoundRobin = new System.Windows.Forms.Button();
             this.restartApp = new System.Windows.Forms.Label();
             this.btnPriority = new System.Windows.Forms.Button();
@@ -550,10 +565,52 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxCodeOutput)).EndInit();
             this.ResumeLayout(false);
 
+
+
+            //  add new buttons into a specific tab
+            this.cpuSchedulerTab.Controls.Add(this.btnSRTF);
+            this.cpuSchedulerTab.Controls.Add(this.btnHRRN);
+            //
+            //  btnSRTF
+            //
+            this.btnSRTF.BackColor = System.Drawing.Color.LightCyan;
+            this.btnSRTF.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnSRTF.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
+            this.btnSRTF.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnSRTF.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnSRTF.Location = new System.Drawing.Point(16, 340);
+            this.btnSRTF.Name = "btnSRTF";
+            this.btnSRTF.Size = new System.Drawing.Size(84, 45);
+            this.btnSRTF.TabIndex = 13;
+            this.btnSRTF.Text = "SRTF";
+            this.btnSRTF.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.btnSRTF.UseVisualStyleBackColor = false;
+            this.btnSRTF.Click += new System.EventHandler(this.btnSRTF_Click);
+            //
+            //  btnHRRN
+            //
+            this.btnHRRN.BackColor = System.Drawing.Color.Lavender;
+            this.btnHRRN.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnHRRN.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
+            this.btnHRRN.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnHRRN.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnHRRN.Location = new System.Drawing.Point(115, 340);
+            this.btnHRRN.Name = "btnHRRN";
+            this.btnHRRN.Size = new System.Drawing.Size(84, 45);
+            this.btnHRRN.TabIndex = 14;
+            this.btnHRRN.Text = "HRRN";
+            this.btnHRRN.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.btnHRRN.UseVisualStyleBackColor = false;
+            this.btnHRRN.Click += new System.EventHandler(this.btnHRRN_Click);
         }
 
         #endregion
 
+        // declare buttons for SRTF and HRRN algorithms
+        private System.Windows.Forms.Button btnSRTF;
+        private System.Windows.Forms.Button btnHRRN;
+
+        // initially declared components
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Button btnCpuScheduler;
         private System.Windows.Forms.Button btnDashBoard;
