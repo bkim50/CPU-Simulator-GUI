@@ -5,7 +5,8 @@
  *  Net ID: bkim50
  *  
  *  For this project, two advanced scheduling algorithms are added into this file (Algorithms.cs):
- *  - Shortest Remaining Time First (SRTF): preemptive version of Shortest Job First (SJF)
+ *  - Shortest Remaining Time First (SRTF): preemptive version of Shortest Job First (SJF) 
+ *  - Highest Response Ratio Next (HRRN): non-preemptive algorithm
  */
 
 using System;
@@ -21,6 +22,10 @@ namespace CpuSchedulingWinForms
 {
     public static class Algorithms
     {
+
+
+        /* Algorithms for the Project Two start from here */
+
 
         // declare the Process class to efficienty manage each process
         private class Process
@@ -49,7 +54,11 @@ namespace CpuSchedulingWinForms
             }
         }
         
-        // Shortest Remaining Time First(SRTF) Algorithm
+        /*
+         *  Shortest Remaining Time First(SRTF) Algorithm:
+         *  a preemptive scheduling algorithm that prioritizes the process
+         *  with the shortest remaining time (remaining burst time)
+         */
         public static void srtfAlgorithm(string userInput)
         {
             PerformanceCounter cpu = new PerformanceCounter("Processor", "% Processor Time", "_Total");
@@ -80,7 +89,7 @@ namespace CpuSchedulingWinForms
             // - if there are multiple processes with the same arrival time,
             //   then still these will be sorted by burst time
             // - if all processes have the same arrival time and the same burst time,
-            //   then processes will be performed in order of their addition to the array
+            //   then nothing will be sorted within the array
             waiting_processes = waiting_processes.OrderBy(process => process.arrival_time)
                                                  .ThenBy(process => process.burst_time)
                                                  .ToArray();
@@ -163,6 +172,111 @@ namespace CpuSchedulingWinForms
             
             MessageBox.Show("Waiting time for P" + ( 1) + " = " + current_time + "%", "Job Queue", MessageBoxButtons.OK, MessageBoxIcon.None);
         }
+
+        /*
+         *  Highest Response Ratio Next (HRRN) Algorithm:
+         *  a non-preemptive scheduling algorithm that prioritizes the process
+         *  based on its response ratio 
+         *  = ([waiting time] + [remaining burst time]) / [remaining burst tiem].
+         */
+        public static void hrrnAlgorithm(string userInput)
+        {
+            // initialize number of process and an array to store processes
+            int number_of_process = Convert.ToInt16(userInput);
+            Process[] waiting_processes = new Process[number_of_process];
+
+            // retrieve a user's confirmation to operate SRTF algorithm
+            DialogResult result = MessageBox.Show("Shortest Remaining Time First Scheduling ", "", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+
+            // if a user does not confirm, then terminate the method
+            if (result != DialogResult.Yes)
+            {
+                return;
+            }
+
+            // for number of process, prompt a user for arrival time and burst time for each process
+            // then add each process to the array
+            for (int i = 0; i < number_of_process; i++)
+            {
+                string arrival_time = Microsoft.VisualBasic.Interaction.InputBox("Enter Arrival Time: ", "Arrival Time for P" + (i + 1), "", -1, -1);
+                string burst_time = Microsoft.VisualBasic.Interaction.InputBox("Enter Burst Time: ", "Burst Time for P" + (i + 1), "", -1, -1);
+
+                waiting_processes[i] = new Process(Convert.ToInt32(arrival_time), Convert.ToInt32(burst_time));
+            }
+
+            // sort the array from earliest arrival time to latest arrival time
+            // - if there are multiple processes with the same arrival time,
+            //   then still these will be sorted by burst time
+            // - if all processes have the same arrival time and the same burst time,
+            //   then nothing will be sorted within the array
+            waiting_processes = waiting_processes.OrderBy(process => process.arrival_time)
+                                                 .ThenBy(process => process.burst_time)
+                                                 .ToArray();
+
+            // track number of completed process and time past
+            int number_of_completed_process = 0;
+            int current_time = 0;
+
+            // while there is an un-completed process, continue performing the algorithm
+            while (number_of_completed_process < number_of_process)
+            {
+                // initially, there is no current process due to the possibility of an idle period 
+                int current_process_index = -1;
+                
+               
+
+                // select a process
+                for (int i = 0; i < number_of_process; i++)
+                {
+                    Process process = waiting_processes[number_of_process];
+
+                    // since HRRN is non-preemptive, the waiting time for each process is [current time] - [arrival time]
+                    int current_waiting_time = current_time - process.arrival_time;
+                    // response ratio = ([waiting time] + [remaining burst time]) / [remaining burst tiem]
+                    double response_ratio = (double)(current_waiting_time + process.remaining_burst_time) / process.remaining_burst_time;
+
+                    if (current_waiting_time >= 0 && 
+                        process.remaining_burst_time > 0 &&
+                        (current_process_index == -1 ||
+                         response_ratio > (double) ((current_time - waiting_processes[current_process_index].arrival_time) + waiting_processes[current_process_index].remaining_burst_time) / waiting_processes[current_process_index].remaining_burst_time))
+                    {
+                        current_process_index = i;
+                    }
+                    
+                }
+
+                // if there is an idle period (current_process_index == -1),
+                // then skip the below operations (by continue keyword) and increment the current time by 1
+                if (current_process_index == -1)
+                {
+                    current_time++;
+                    continue;
+                }
+
+                // otherwise (if there is no idle period),
+                // since HRRN is non-premptive, 
+                Process current_process = waiting_processes[current_process_index];
+
+                while (current_process.remaining_burst_time-- > 0)
+                {
+                    current_time++;
+                }
+
+                current_process.completion_time = current_time;
+
+                // turnaround_time = completion_time - arrival_time
+                current_process.turnaround_time = current_process.completion_time - current_process.arrival_time;
+                // waiting_time = turnaround_time - burst_time
+                current_process.waiting_time = current_process.turnaround_time - current_process.burst_time;
+
+                number_of_completed_process++;
+
+            }
+        }
+
+
+        /* Algorithms for the Project Two Ends */
+
 
         /*
          *  initially,four basic CPU scheduling algorithms are implemented in this file:
