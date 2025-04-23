@@ -61,7 +61,10 @@ namespace CpuSchedulingWinForms
          */
         public static void srtfAlgorithm(string userInput)
         {
+            // start to measure CPU utilization
             PerformanceCounter cpu = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+            dynamic startValue = cpu.NextValue();
+
             // initialize number of process and an array to store processes
             int number_of_process = Convert.ToInt16(userInput);
             Process[] waiting_processes = new Process[number_of_process];
@@ -167,11 +170,25 @@ namespace CpuSchedulingWinForms
             average_waiting_time /= number_of_process;
 
             // calculate throughput (Processes per Second)
-            // throughput = [total number of completed processes] / [overall completed time]
-            double throughput = number_of_completed_process / current_time;
-            
-            MessageBox.Show("Waiting time for P" + ( 1) + " = " + current_time + "%", "Job Queue", MessageBoxButtons.OK, MessageBoxIcon.None);
+            // - throughput = [total number of completed processes] / [overall completed time]
+            // - overall, "current time" will be "completed time"
+            // - since the "current time" is in "milli-second", convert it to "second" by divide 1,000
+            double throughput = number_of_completed_process / ((double) current_time / 1000);
+
+            // display results:
+            // - average waiting time (milli-seconds)
+            // - average turnaround time (milli-seconds)
+            // - CPU Utilization (%)
+            // - Throughput (processes / second)
+            MessageBox.Show("** Shortest Remaining Time First (SRTF) with "+ number_of_process + " processes **\n\n"
+                            + "Average Waiting Time (AWT) = " + average_waiting_time.ToString("0.0##") + " ms\n\n" 
+                            + "Average Turnaround Time (ATT) = " + average_turnaround_time.ToString("0.0##") + " ms\n\n"
+                            + "CPU Utilization = " + ((double) cpu.NextValue()).ToString("0.0##") + " %\n\n"
+                            + "Throughput = " + throughput.ToString("0.0##") + " processes/second\n"
+                            , "Shortest Remaining Time First (SRTF) Result", MessageBoxButtons.OK, MessageBoxIcon.None);
         }
+
+
 
         /*
          *  Highest Response Ratio Next (HRRN) Algorithm:
@@ -181,12 +198,16 @@ namespace CpuSchedulingWinForms
          */
         public static void hrrnAlgorithm(string userInput)
         {
+            // start to measure CPU utilization
+            PerformanceCounter cpu = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+            dynamic startValue = cpu.NextValue();
+
             // initialize number of process and an array to store processes
             int number_of_process = Convert.ToInt16(userInput);
             Process[] waiting_processes = new Process[number_of_process];
 
             // retrieve a user's confirmation to operate SRTF algorithm
-            DialogResult result = MessageBox.Show("Shortest Remaining Time First Scheduling ", "", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+            DialogResult result = MessageBox.Show("Highest Response Ratio Next Scheduling", "", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
 
             // if a user does not confirm, then terminate the method
             if (result != DialogResult.Yes)
@@ -228,7 +249,7 @@ namespace CpuSchedulingWinForms
                 // select a process
                 for (int i = 0; i < number_of_process; i++)
                 {
-                    Process process = waiting_processes[number_of_process];
+                    Process process = waiting_processes[i];
 
                     // since HRRN is non-preemptive, the waiting time for each process is [current time] - [arrival time]
                     int current_waiting_time = current_time - process.arrival_time;
@@ -272,6 +293,38 @@ namespace CpuSchedulingWinForms
                 number_of_completed_process++;
 
             }
+
+            // after all processes are completed,
+            // calculate average turnaround time (ATT) and average waiting time (AWT)
+            double average_turnaround_time = 0;
+            double average_waiting_time = 0;
+
+            foreach (Process process in waiting_processes)
+            {
+                average_turnaround_time += process.turnaround_time;
+                average_waiting_time += process.waiting_time;
+            }
+
+            average_turnaround_time /= number_of_process;
+            average_waiting_time /= number_of_process;
+
+            // calculate throughput (Processes per Second)
+            // - throughput = [total number of completed processes] / [overall completed time]
+            // - overall, "current time" will be "completed time"
+            // - since the "current time" is in "milli-second", convert it to "second" by divide 1,000
+            double throughput = number_of_completed_process / ((double)current_time / 1000);
+
+            // display results:
+            // - average waiting time (milli-seconds)
+            // - average turnaround time (milli-seconds)
+            // - CPU Utilization (%)
+            // - Throughput (processes / second)
+            MessageBox.Show("** Shortest Remaining Time First (SRTF) with " + number_of_process + " processes **\n\n"
+                            + "Average Waiting Time (AWT) = " + average_waiting_time.ToString("0.0##") + " ms\n\n"
+                            + "Average Turnaround Time (ATT) = " + average_turnaround_time.ToString("0.0##") + " ms\n\n"
+                            + "CPU Utilization = " + ((double)cpu.NextValue()).ToString("0.0##") + " %\n\n"
+                            + "Throughput = " + throughput.ToString("0.0##") + " processes/second\n"
+                            , "Shortest Remaining Time First (SRTF) Result", MessageBoxButtons.OK, MessageBoxIcon.None);
         }
 
 
