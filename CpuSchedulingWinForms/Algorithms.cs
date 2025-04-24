@@ -62,11 +62,11 @@ namespace CpuSchedulingWinForms
         public static void srtfAlgorithm(string userInput)
         {
             // start to measure CPU utilization
-            PerformanceCounter cpu = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+            PerformanceCounter cpu = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
             dynamic startValue = cpu.NextValue();
 
             // initialize number of process and an array to store processes
-            int number_of_process = Convert.ToInt16(userInput);
+            int number_of_process = Convert.ToInt32(userInput);
             Process[] waiting_processes = new Process[number_of_process];
 
             // retrieve a user's confirmation to operate SRTF algorithm
@@ -107,15 +107,16 @@ namespace CpuSchedulingWinForms
                 // initially, there is no current process due to the possibility of an idle period 
                 int current_process_index = -1;
 
-                // for the number of process,
+                // for the number of process, select a process with the shortest remaining burst time
                 // - if there is an availble process (while there is no current process),
                 //   then re-initialze the process as the current process
-                // - if there is a process whose arrival time is within the current time,
+                // - if there is an un-completed process whose arrival time is within the current time,
                 //   whose remaining burst time is greater than 0 and less than the current process' remaining burst time,
                 //   then swap the current process with the process
                 for (int i = 0; i < waiting_processes.Length; i++)
                 {
                     Process process = waiting_processes[i];
+
                     if (process.arrival_time <= current_time && 
                         process.remaining_burst_time > 0 &&
                         (current_process_index == -1 ||
@@ -199,7 +200,7 @@ namespace CpuSchedulingWinForms
         public static void hrrnAlgorithm(string userInput)
         {
             // start to measure CPU utilization
-            PerformanceCounter cpu = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+            PerformanceCounter cpu = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
             dynamic startValue = cpu.NextValue();
 
             // initialize number of process and an array to store processes
@@ -243,10 +244,13 @@ namespace CpuSchedulingWinForms
             {
                 // initially, there is no current process due to the possibility of an idle period 
                 int current_process_index = -1;
-                
-               
 
-                // select a process
+                // for the number of process, select a process with the highest response ratio
+                // - if there is an availble process (while there is no current process),
+                //   then re-initialze the process as the current process
+                // - if there is an un-completed process whose arrival time is within the current time,
+                //   whose response ratio is greater than the current process' response ratio,
+                //   then swap the current process with the process
                 for (int i = 0; i < number_of_process; i++)
                 {
                     Process process = waiting_processes[i];
@@ -256,14 +260,13 @@ namespace CpuSchedulingWinForms
                     // response ratio = ([waiting time] + [remaining burst time]) / [remaining burst tiem]
                     double response_ratio = (double)(current_waiting_time + process.remaining_burst_time) / process.remaining_burst_time;
 
-                    if (current_waiting_time >= 0 && 
+                    if (process.arrival_time <= current_time && 
                         process.remaining_burst_time > 0 &&
                         (current_process_index == -1 ||
                          response_ratio > (double) ((current_time - waiting_processes[current_process_index].arrival_time) + waiting_processes[current_process_index].remaining_burst_time) / waiting_processes[current_process_index].remaining_burst_time))
                     {
                         current_process_index = i;
                     }
-                    
                 }
 
                 // if there is an idle period (current_process_index == -1),
@@ -275,7 +278,10 @@ namespace CpuSchedulingWinForms
                 }
 
                 // otherwise (if there is no idle period),
-                // since HRRN is non-premptive, 
+                // since HRRN is non-premptive,
+                // - increment the current time by 1 until the current process is completed (remaining_burst_time == 0)
+                // - initialze the current process' completion time
+                // - increment the number of completed process by 1
                 Process current_process = waiting_processes[current_process_index];
 
                 while (current_process.remaining_burst_time-- > 0)
@@ -319,12 +325,12 @@ namespace CpuSchedulingWinForms
             // - average turnaround time (milli-seconds)
             // - CPU Utilization (%)
             // - Throughput (processes / second)
-            MessageBox.Show("** Shortest Remaining Time First (SRTF) with " + number_of_process + " processes **\n\n"
+            MessageBox.Show("** Highest Response Ratio Next (HRRN) with " + number_of_process + " processes **\n\n"
                             + "Average Waiting Time (AWT) = " + average_waiting_time.ToString("0.0##") + " ms\n\n"
                             + "Average Turnaround Time (ATT) = " + average_turnaround_time.ToString("0.0##") + " ms\n\n"
-                            + "CPU Utilization = " + ((double)cpu.NextValue()).ToString("0.0##") + " %\n\n"
+                            + "CPU Utilization = " + ((double) cpu.NextValue()).ToString("0.0##") + " %\n\n"
                             + "Throughput = " + throughput.ToString("0.0##") + " processes/second\n"
-                            , "Shortest Remaining Time First (SRTF) Result", MessageBoxButtons.OK, MessageBoxIcon.None);
+                            , "Highest Response Ratio Next (HRRN) Result", MessageBoxButtons.OK, MessageBoxIcon.None);
         }
 
 
@@ -335,13 +341,25 @@ namespace CpuSchedulingWinForms
          *  initially,four basic CPU scheduling algorithms are implemented in this file:
          *  - First Come, First Served (FCFS)
          *  - Shortest Job First (SJF)
-         *  - Round Robin (RR)
          *  - Priority Scheduling
+         *  - Round Robin (RR)
+         *  
+         *  modify those initial four algorithms to properly compare with newly added algorithms
+         *  - add CPU utilization calculatiion for each algorithm
+         *  - add turnaround time (= waiting time + burst time) for FCFS, SJF, and Priority Scheduling
+         *  - re-format result display for each algorithm
          */
         public static void fcfsAlgorithm(string userInput)
         {
+            // start to measure CPU utilization
+            PerformanceCounter cpu = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
+            dynamic startValue = cpu.NextValue();
+
             int np = Convert.ToInt16(userInput);
             int npX2 = np * 2;
+
+            // add new array for turnaround time
+            double[] turnaround_time_array = new double[np];
 
             double[] bp = new double[np];
             double[] wtp = new double[np];
@@ -355,9 +373,6 @@ namespace CpuSchedulingWinForms
             {
                 for (num = 0; num <= np - 1; num++)
                 {
-                    //MessageBox.Show("Enter Burst time for P" + (num + 1) + ":", "Burst time for Process", MessageBoxButtons.OK, MessageBoxIcon.Question);
-                    //Console.WriteLine("\nEnter Burst time for P" + (num + 1) + ":");
-
                     string input =
                     Microsoft.VisualBasic.Interaction.InputBox("Enter Burst time: ",
                                                        "Burst time for P" + (num + 1),
@@ -375,11 +390,16 @@ namespace CpuSchedulingWinForms
                     if (num == 0)
                     {
                         wtp[num] = 0;
+
+                        // turnaround time = [waiting time] + [burst time]
+                        turnaround_time_array[num] = wtp[num] + bp[num];
                     }
                     else
                     {
                         wtp[num] = wtp[num - 1] + bp[num - 1];
-                        MessageBox.Show("Waiting time for P" + (num + 1) + " = " + wtp[num], "Job Queue", MessageBoxButtons.OK, MessageBoxIcon.None);
+
+                        // turnaround time = [waiting time] + [burst time]
+                        turnaround_time_array[num] = wtp[num] + bp[num];
                     }
                 }
                 for (num = 0; num <= np - 1; num++)
@@ -387,7 +407,35 @@ namespace CpuSchedulingWinForms
                     twt = twt + wtp[num];
                 }
                 awt = twt / np;
-                MessageBox.Show("Average waiting time for " + np + " processes" + " = " + awt + " sec(s)", "Average Awaiting Time", MessageBoxButtons.OK, MessageBoxIcon.None);
+
+
+                // calculate average turnaround time (ATT)
+                double average_turnaround_time = 0.0;
+
+                foreach (int turnaround_time in turnaround_time_array)
+                {
+                    average_turnaround_time += turnaround_time;
+                }
+
+                average_turnaround_time /= np;
+
+                // calculate throughput (Processes per Second)
+                // - throughput = [total number of completed processes] / [overall completed time]
+                // - overall, "last process' turnaround time" will be "completed time" since this algorithm does not take arrival time for each process
+                // - since the "turnaround time" is in "milli-second", convert it to "second" by divide 1,000
+                double throughput = np / ((double) turnaround_time_array[turnaround_time_array.Length - 1] / 1000);
+
+                // display results:
+                // - average waiting time (milli-seconds)
+                // - average turnaround time (milli-seconds)
+                // - CPU Utilization (%)
+                // - Throughput (processes / second)
+                MessageBox.Show("** First Come, First Served (FCFS) with " + np + " processes **\n\n"
+                                + "Average Waiting Time (AWT) = " + awt.ToString("0.0##") + " ms\n\n"
+                                + "Average Turnaround Time (ATT) = " + average_turnaround_time.ToString("0.0##") + " ms\n\n"
+                                + "CPU Utilization = " + ((double) cpu.NextValue()).ToString("0.0##") + " %\n\n"
+                                + "Throughput = " + throughput.ToString("0.0##") + " processes/second\n"
+                                , "Highest Response Ratio Next (HRRN) Result", MessageBoxButtons.OK, MessageBoxIcon.None);
             }
             else if (result == DialogResult.No)
             {
@@ -399,7 +447,14 @@ namespace CpuSchedulingWinForms
 
         public static void sjfAlgorithm(string userInput)
         {
+            // start to measure CPU utilization
+            PerformanceCounter cpu = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
+            dynamic startValue = cpu.NextValue();
+
             int np = Convert.ToInt16(userInput);
+
+            // add new array for turnaround time
+            double[] turnaround_time_array = new double[np];
 
             double[] bp = new double[np];
             double[] wtp = new double[np];
@@ -448,8 +503,11 @@ namespace CpuSchedulingWinForms
                             if (p[num] == bp[x] && found == false)
                             {
                                 wtp[num] = 0;
-                                MessageBox.Show("Waiting time for P" + (x + 1) + " = " + wtp[num], "Waiting time:", MessageBoxButtons.OK, MessageBoxIcon.None);
-                                //Console.WriteLine("\nWaiting time for P" + (x + 1) + " = " + wtp[num]);
+                                //MessageBox.Show("Waiting time for P" + (x + 1) + " = " + wtp[num], "Waiting time:", MessageBoxButtons.OK, MessageBoxIcon.None);
+                                
+                                // turnaround time = [waiting time] + [burst time]
+                                turnaround_time_array[num] = wtp[num] + bp[x];
+
                                 bp[x] = 0;
                                 found = true;
                             }
@@ -463,8 +521,11 @@ namespace CpuSchedulingWinForms
                             if (p[num] == bp[x] && found == false)
                             {
                                 wtp[num] = wtp[num - 1] + p[num - 1];
-                                MessageBox.Show("Waiting time for P" + (x + 1) + " = " + wtp[num], "Waiting time", MessageBoxButtons.OK, MessageBoxIcon.None);
-                                //Console.WriteLine("\nWaiting time for P" + (x + 1) + " = " + wtp[num]);
+                                //MessageBox.Show("Waiting time for P" + (x + 1) + " = " + wtp[num], "Waiting time", MessageBoxButtons.OK, MessageBoxIcon.None);
+
+                                // turnaround time = [waiting time] + [burst time]
+                                turnaround_time_array[num] = wtp[num] + bp[x];
+
                                 bp[x] = 0;
                                 found = true;
                             }
@@ -476,13 +537,48 @@ namespace CpuSchedulingWinForms
                 {
                     twt = twt + wtp[num];
                 }
-                MessageBox.Show("Average waiting time for " + np + " processes" + " = " + (awt = twt / np) + " sec(s)", "Average waiting time", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                awt = twt / np;
+
+                // calculate average turnaround time (ATT)
+                double average_turnaround_time = 0.0;
+
+                foreach (int turnaround_time in turnaround_time_array)
+                {
+                    average_turnaround_time += turnaround_time;
+                }
+
+                average_turnaround_time /= np;
+
+                // calculate throughput (Processes per Second)
+                // - throughput = [total number of completed processes] / [overall completed time]
+                // - overall, "last process' turnaround time" will be "completed time" since this algorithm does not take arrival time for each process
+                // - since the "turnaround time" is in "milli-second", convert it to "second" by divide 1,000
+                double throughput = np / ((double)turnaround_time_array[turnaround_time_array.Length - 1] / 1000);
+
+                // display results:
+                // - average waiting time (milli-seconds)
+                // - average turnaround time (milli-seconds)
+                // - CPU Utilization (%)
+                // - Throughput (processes / second)
+                MessageBox.Show("** Shortest Job First (SJF) with " + np + " processes **\n\n"
+                                + "Average Waiting Time (AWT) = " + awt.ToString("0.0##") + " ms\n\n"
+                                + "Average Turnaround Time (ATT) = " + average_turnaround_time.ToString("0.0##") + " ms\n\n"
+                                + "CPU Utilization = " + ((double)cpu.NextValue()).ToString("0.0##") + " %\n\n"
+                                + "Throughput = " + throughput.ToString("0.0##") + " processes/second\n"
+                                , "Shortest Job First (SJF) Result", MessageBoxButtons.OK, MessageBoxIcon.None);
             }
         }
 
         public static void priorityAlgorithm(string userInput)
         {
+            // start to measure CPU utilization
+            PerformanceCounter cpu = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
+            dynamic startValue = cpu.NextValue();
+
             int np = Convert.ToInt16(userInput);
+
+            // add new array for turnaround time
+            double[] turnaround_time_array = new double[np];
 
             DialogResult result = MessageBox.Show("Priority Scheduling ", "", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
 
@@ -542,8 +638,12 @@ namespace CpuSchedulingWinForms
                             if (sp[num] == p[x] && found == false)
                             {
                                 wtp[num] = 0;
-                                MessageBox.Show("Waiting time for P" + (x + 1) + " = " + wtp[num], "Waiting time", MessageBoxButtons.OK);
+                                //MessageBox.Show("Waiting time for P" + (x + 1) + " = " + wtp[num], "Waiting time", MessageBoxButtons.OK);
                                 //Console.WriteLine("\nWaiting time for P" + (x + 1) + " = " + wtp[num]);
+
+                                // turnaround time = [waiting time] + [burst time]
+                                turnaround_time_array[num] = wtp[num] + bp[x];
+
                                 temp = x;
                                 p[x] = 0;
                                 found = true;
@@ -558,8 +658,12 @@ namespace CpuSchedulingWinForms
                             if (sp[num] == p[x] && found == false)
                             {
                                 wtp[num] = wtp[num - 1] + bp[temp];
-                                MessageBox.Show("Waiting time for P" + (x + 1) + " = " + wtp[num], "Waiting time", MessageBoxButtons.OK);
+                                //MessageBox.Show("Waiting time for P" + (x + 1) + " = " + wtp[num], "Waiting time", MessageBoxButtons.OK);
                                 //Console.WriteLine("\nWaiting time for P" + (x + 1) + " = " + wtp[num]);
+
+                                // turnaround time = [waiting time] + [burst time]
+                                turnaround_time_array[num] = wtp[num] + bp[x];
+
                                 temp = x;
                                 p[x] = 0;
                                 found = true;
@@ -572,9 +676,38 @@ namespace CpuSchedulingWinForms
                 {
                     twt = twt + wtp[num];
                 }
-                MessageBox.Show("Average waiting time for " + np + " processes" + " = " + (awt = twt / np) + " sec(s)", "Average waiting time", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                awt = twt / np;
+                //MessageBox.Show("Average waiting time for " + np + " processes" + " = " + (awt = twt / np) + " sec(s)", "Average waiting time", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 //Console.WriteLine("\n\nAverage waiting time: " + (awt = twt / np));
                 //Console.ReadLine();
+
+                // calculate average turnaround time (ATT)
+                double average_turnaround_time = 0.0;
+
+                foreach (int turnaround_time in turnaround_time_array)
+                {
+                    average_turnaround_time += turnaround_time;
+                }
+
+                average_turnaround_time /= np;
+
+                // calculate throughput (Processes per Second)
+                // - throughput = [total number of completed processes] / [overall completed time]
+                // - overall, "last process' turnaround time" will be "completed time" since this algorithm does not take arrival time for each process
+                // - since the "turnaround time" is in "milli-second", convert it to "second" by divide 1,000
+                double throughput = np / ((double)turnaround_time_array[turnaround_time_array.Length - 1] / 1000);
+
+                // display results:
+                // - average waiting time (milli-seconds)
+                // - average turnaround time (milli-seconds)
+                // - CPU Utilization (%)
+                // - Throughput (processes / second)
+                MessageBox.Show("** Shortest Job First (SJF) with " + np + " processes **\n\n"
+                                + "Average Waiting Time (AWT) = " + awt.ToString("0.0##") + " ms\n\n"
+                                + "Average Turnaround Time (ATT) = " + average_turnaround_time.ToString("0.0##") + " ms\n\n"
+                                + "CPU Utilization = " + ((double)cpu.NextValue()).ToString("0.0##") + " %\n\n"
+                                + "Throughput = " + throughput.ToString("0.0##") + " processes/second\n"
+                                , "Shortest Job First (SJF) Result", MessageBoxButtons.OK, MessageBoxIcon.None);
             }
             else
             {
@@ -584,6 +717,10 @@ namespace CpuSchedulingWinForms
 
         public static void roundRobinAlgorithm(string userInput)
         {
+            // start to measure CPU utilization
+            PerformanceCounter cpu = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
+            dynamic startValue = cpu.NextValue();
+
             int np = Convert.ToInt16(userInput);
             int i, counter = 0;
             double total = 0.0;
@@ -644,8 +781,8 @@ namespace CpuSchedulingWinForms
                     {
                         x--;
                         //printf("nProcess[%d]tt%dtt %dttt %d", i + 1, burst_time[i], total - arrival_time[i], total - arrival_time[i] - burst_time[i]);
-                        MessageBox.Show("Turnaround time for Process " + (i + 1) + " : " + (total - arrivalTime[i]), "Turnaround time for Process " + (i + 1), MessageBoxButtons.OK);
-                        MessageBox.Show("Wait time for Process " + (i + 1) + " : " + (total - arrivalTime[i] - burstTime[i]), "Wait time for Process " + (i + 1), MessageBoxButtons.OK);
+                        //MessageBox.Show("Turnaround time for Process " + (i + 1) + " : " + (total - arrivalTime[i]), "Turnaround time for Process " + (i + 1), MessageBoxButtons.OK);
+                        //MessageBox.Show("Wait time for Process " + (i + 1) + " : " + (total - arrivalTime[i] - burstTime[i]), "Wait time for Process " + (i + 1), MessageBoxButtons.OK);
                         turnaroundTime = (turnaroundTime + total - arrivalTime[i]);
                         waitTime = (waitTime + total - arrivalTime[i] - burstTime[i]);                        
                         counter = 0;
@@ -665,8 +802,26 @@ namespace CpuSchedulingWinForms
                 }
                 averageWaitTime = Convert.ToInt64(waitTime * 1.0 / np);
                 averageTurnaroundTime = Convert.ToInt64(turnaroundTime * 1.0 / np);
-                MessageBox.Show("Average wait time for " + np + " processes: " + averageWaitTime + " sec(s)", "", MessageBoxButtons.OK);
-                MessageBox.Show("Average turnaround time for " + np + " processes: " + averageTurnaroundTime + " sec(s)", "", MessageBoxButtons.OK);
+                //MessageBox.Show("Average wait time for " + np + " processes: " + averageWaitTime + " sec(s)", "", MessageBoxButtons.OK);
+                //MessageBox.Show("Average turnaround time for " + np + " processes: " + averageTurnaroundTime + " sec(s)", "", MessageBoxButtons.OK);
+
+                // calculate throughput (Processes per Second)
+                // - throughput = [total number of completed processes] / [overall completed time]
+                // - overall, "total" will be "completed time" since this variable tracks completion time
+                // - since the "turnaround time" is in "milli-second", convert it to "second" by divide 1,000
+                double throughput = np / ((double) total / 1000);
+
+                // display results:
+                // - average waiting time (milli-seconds)
+                // - average turnaround time (milli-seconds)
+                // - CPU Utilization (%)
+                // - Throughput (processes / second)
+                MessageBox.Show("** Round Robin (RR) with " + np + " processes **\n\n"
+                                + "Average Waiting Time (AWT) = " + averageWaitTime.ToString("0.0##") + " ms\n\n"
+                                + "Average Turnaround Time (ATT) = " + averageTurnaroundTime.ToString("0.0##") + " ms\n\n"
+                                + "CPU Utilization = " + ((double)cpu.NextValue()).ToString("0.0##") + " %\n\n"
+                                + "Throughput = " + throughput.ToString("0.0##") + " processes/second\n"
+                                , "Round Robin (RR) Result", MessageBoxButtons.OK, MessageBoxIcon.None);
             }
         }
     }
