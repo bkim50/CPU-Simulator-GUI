@@ -1,4 +1,14 @@
-﻿using System;
+﻿/*
+ *  Project Two: CPU Scheduler
+ *  Name: Brien Kim
+ *  Course: CS 3502 Section W03
+ *  Net ID: bkim50
+ *  
+ *  For this file (Form1.cs):
+ *  - re-calling algorithm with new parameter
+ */
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -23,7 +33,8 @@ namespace CpuSchedulingWinForms
         {
             if (txtProcess.Text != "")
             {
-                Algorithms.fcfsAlgorithm(txtProcess.Text);
+                Algorithms.fcfsAlgorithm(txtProcess.Text, listView1);
+                
             }
             else
             {
@@ -44,7 +55,7 @@ namespace CpuSchedulingWinForms
         {
             if (txtProcess.Text != "")
             {
-                Algorithms.sjfAlgorithm(txtProcess.Text);
+                Algorithms.sjfAlgorithm(txtProcess.Text, listView1);
             }
             else
             {
@@ -57,7 +68,7 @@ namespace CpuSchedulingWinForms
         {
             if (txtProcess.Text != "")
             {
-                Algorithms.priorityAlgorithm(txtProcess.Text);
+                Algorithms.priorityAlgorithm(txtProcess.Text, listView1);
             } else
             {
                 MessageBox.Show("Enter number of processes", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
