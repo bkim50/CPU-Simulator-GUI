@@ -5,7 +5,7 @@
  *  Net ID: bkim50
  *  
  *  For this file (CpuScheduler.Designer.cs), 
- *  - add new button components for two advanced scheduling algorithms (SRTF and HRRN) added into the file (Algorithms.cs):
+ *  - add new button components for two advanced scheduling algorithms (SRTF and HRRN):
  */
 
 namespace CpuSchedulingWinForms
