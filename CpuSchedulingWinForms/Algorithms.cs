@@ -7,6 +7,12 @@
  *  For this project, two advanced scheduling algorithms are added into this file (Algorithms.cs):
  *  - Shortest Remaining Time First (SRTF): preemptive version of Shortest Job First (SJF) 
  *  - Highest Response Ratio Next (HRRN): non-preemptive algorithm
+ *  
+ *  For this file (Algorithms.cs):
+ *  - add two advanced scheduling algorithms (SRTF and HRRN)
+ *  - add calculation for CPU utilization and average turnaround time for four basic scheduling algorithms
+ *  - re-format a result display for four basic scheduling algorithms
+ *  - add new parameter for each algorithm to display more information through the dashboard
  */
 
 using System;
@@ -16,6 +22,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 
 namespace CpuSchedulingWinForms
@@ -52,6 +59,12 @@ namespace CpuSchedulingWinForms
                 this.burst_time = burst_time;
                 this.remaining_burst_time = burst_time;
             }
+
+            // once an algorithm is completed, reset the ID to start from 1
+            public static void Reset()
+            {
+                tracking_id = 0;
+            }
         }
         
         /*
@@ -59,7 +72,7 @@ namespace CpuSchedulingWinForms
          *  a preemptive scheduling algorithm that prioritizes the process
          *  with the shortest remaining time (remaining burst time)
          */
-        public static void srtfAlgorithm(string userInput)
+        public static void srtfAlgorithm(string userInput, System.Windows.Forms.ListView listView1)
         {
             // start to measure CPU utilization
             PerformanceCounter cpu = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
@@ -100,7 +113,7 @@ namespace CpuSchedulingWinForms
             // track number of completed process and time past
             int number_of_completed_process = 0;
             int current_time = 0;
-
+            
             // while there is an un-completed process, continue performing the algorithm
             while (number_of_completed_process < number_of_process)
             {
@@ -153,6 +166,17 @@ namespace CpuSchedulingWinForms
                     current_process.waiting_time = current_process.turnaround_time - current_process.burst_time;
 
                     number_of_completed_process++;
+
+                    // add a row with information to the dashboard
+                    var item = new ListViewItem();
+                    item.Text = "Process " + current_process.id;
+                    item.SubItems.Add(Convert.ToString(current_process.arrival_time));      // arrival time
+                    item.SubItems.Add(Convert.ToString(current_process.burst_time));        // burst time
+                    item.SubItems.Add(Convert.ToString(current_process.completion_time));   // completion time
+                    item.SubItems.Add(Convert.ToString(current_process.waiting_time));      // waiting time
+                    item.SubItems.Add(Convert.ToString(current_process.turnaround_time));   // turnaround time
+                    item.SubItems.Add(Convert.ToString("-"));                               // quantum time
+                    listView1.Items.Add(item);
                 }
             }
 
@@ -170,6 +194,9 @@ namespace CpuSchedulingWinForms
             average_turnaround_time /= number_of_process;
             average_waiting_time /= number_of_process;
 
+            // collect CPU utilization
+            double CPU_utilization = (double)cpu.NextValue();
+
             // calculate throughput (Processes per Second)
             // - throughput = [total number of completed processes] / [overall completed time]
             // - overall, "current time" will be "completed time"
@@ -184,9 +211,20 @@ namespace CpuSchedulingWinForms
             MessageBox.Show("** Shortest Remaining Time First (SRTF) with "+ number_of_process + " processes **\n\n"
                             + "Average Waiting Time (AWT) = " + average_waiting_time.ToString("0.0##") + " ms\n\n" 
                             + "Average Turnaround Time (ATT) = " + average_turnaround_time.ToString("0.0##") + " ms\n\n"
-                            + "CPU Utilization = " + ((double) cpu.NextValue()).ToString("0.0##") + " %\n\n"
+                            + "CPU Utilization = " + CPU_utilization.ToString("0.0##") + " %\n\n"
                             + "Throughput = " + throughput.ToString("0.0##") + " processes/second\n"
                             , "Shortest Remaining Time First (SRTF) Result", MessageBoxButtons.OK, MessageBoxIcon.None);
+
+            
+            // add results on the dashboard
+            listView1.Items.Add("\n");
+            listView1.Items.Add("AWT: " + average_waiting_time.ToString("0.0##") + " ms");
+            listView1.Items.Add("ATT: " + average_turnaround_time.ToString("0.0##") + " ms");
+            listView1.Items.Add("CPU Utilization: " + CPU_utilization.ToString("0.0##") + " %");
+            listView1.Items.Add("Throughput: " + throughput.ToString("0.0##") + " processes/second");
+
+            // reset the process
+            Process.Reset();
         }
 
 
@@ -197,7 +235,7 @@ namespace CpuSchedulingWinForms
          *  based on its response ratio 
          *  = ([waiting time] + [remaining burst time]) / [remaining burst tiem].
          */
-        public static void hrrnAlgorithm(string userInput)
+        public static void hrrnAlgorithm(string userInput, System.Windows.Forms.ListView listView1)
         {
             // start to measure CPU utilization
             PerformanceCounter cpu = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
@@ -298,6 +336,16 @@ namespace CpuSchedulingWinForms
 
                 number_of_completed_process++;
 
+                // add a row with information to the dashboard
+                var item = new ListViewItem();
+                item.Text = "Process " + current_process.id;
+                item.SubItems.Add(Convert.ToString(current_process.arrival_time));      // arrival time
+                item.SubItems.Add(Convert.ToString(current_process.burst_time));        // burst time
+                item.SubItems.Add(Convert.ToString(current_process.completion_time));   // completion time
+                item.SubItems.Add(Convert.ToString(current_process.waiting_time));      // waiting time
+                item.SubItems.Add(Convert.ToString(current_process.turnaround_time));   // turnaround time
+                item.SubItems.Add(Convert.ToString("-"));                               // quantum time
+                listView1.Items.Add(item);
             }
 
             // after all processes are completed,
@@ -314,6 +362,9 @@ namespace CpuSchedulingWinForms
             average_turnaround_time /= number_of_process;
             average_waiting_time /= number_of_process;
 
+            // collect CPU utilization
+            double CPU_utilization = (double)cpu.NextValue();
+
             // calculate throughput (Processes per Second)
             // - throughput = [total number of completed processes] / [overall completed time]
             // - overall, "current time" will be "completed time"
@@ -328,9 +379,19 @@ namespace CpuSchedulingWinForms
             MessageBox.Show("** Highest Response Ratio Next (HRRN) with " + number_of_process + " processes **\n\n"
                             + "Average Waiting Time (AWT) = " + average_waiting_time.ToString("0.0##") + " ms\n\n"
                             + "Average Turnaround Time (ATT) = " + average_turnaround_time.ToString("0.0##") + " ms\n\n"
-                            + "CPU Utilization = " + ((double) cpu.NextValue()).ToString("0.0##") + " %\n\n"
+                            + "CPU Utilization = " + CPU_utilization.ToString("0.0##") + " %\n\n"
                             + "Throughput = " + throughput.ToString("0.0##") + " processes/second\n"
                             , "Highest Response Ratio Next (HRRN) Result", MessageBoxButtons.OK, MessageBoxIcon.None);
+
+            // add results on the dashboard
+            listView1.Items.Add("\n");
+            listView1.Items.Add("AWT: " + average_waiting_time.ToString("0.0##") + " ms");
+            listView1.Items.Add("ATT: " + average_turnaround_time.ToString("0.0##") + " ms");
+            listView1.Items.Add("CPU Utilization: " + CPU_utilization.ToString("0.0##") + " %");
+            listView1.Items.Add("Throughput: " + throughput.ToString("0.0##") + " processes/second");
+
+            // reset the process
+            Process.Reset();
         }
 
 
@@ -348,8 +409,9 @@ namespace CpuSchedulingWinForms
          *  - add CPU utilization calculatiion for each algorithm
          *  - add turnaround time (= waiting time + burst time) for FCFS, SJF, and Priority Scheduling
          *  - re-format result display for each algorithm
+         *  - create new columns to display more information through the dashboard
          */
-        public static void fcfsAlgorithm(string userInput)
+        public static void fcfsAlgorithm(string userInput, System.Windows.Forms.ListView listView1)
         {
             // start to measure CPU utilization
             PerformanceCounter cpu = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
@@ -401,6 +463,17 @@ namespace CpuSchedulingWinForms
                         // turnaround time = [waiting time] + [burst time]
                         turnaround_time_array[num] = wtp[num] + bp[num];
                     }
+
+                    // add a row with information to the dashboard
+                    var item = new ListViewItem();
+                    item.Text = "Process " + num;
+                    item.SubItems.Add(Convert.ToString("-"));                       // arrival time
+                    item.SubItems.Add(Convert.ToString(bp[num]));                   // burst time
+                    item.SubItems.Add(Convert.ToString(turnaround_time_array[num]));// completion time
+                    item.SubItems.Add(Convert.ToString(wtp[num]));                  // waiting time
+                    item.SubItems.Add(Convert.ToString(turnaround_time_array[num]));// turnaround time
+                    item.SubItems.Add(Convert.ToString("-"));                       // quantum time
+                    listView1.Items.Add(item);
                 }
                 for (num = 0; num <= np - 1; num++)
                 {
@@ -419,6 +492,9 @@ namespace CpuSchedulingWinForms
 
                 average_turnaround_time /= np;
 
+                // collect CPU utilization
+                double CPU_utilization = (double)cpu.NextValue();
+
                 // calculate throughput (Processes per Second)
                 // - throughput = [total number of completed processes] / [overall completed time]
                 // - overall, "last process' turnaround time" will be "completed time" since this algorithm does not take arrival time for each process
@@ -433,9 +509,16 @@ namespace CpuSchedulingWinForms
                 MessageBox.Show("** First Come, First Served (FCFS) with " + np + " processes **\n\n"
                                 + "Average Waiting Time (AWT) = " + awt.ToString("0.0##") + " ms\n\n"
                                 + "Average Turnaround Time (ATT) = " + average_turnaround_time.ToString("0.0##") + " ms\n\n"
-                                + "CPU Utilization = " + ((double) cpu.NextValue()).ToString("0.0##") + " %\n\n"
+                                + "CPU Utilization = " + CPU_utilization.ToString("0.0##") + " %\n\n"
                                 + "Throughput = " + throughput.ToString("0.0##") + " processes/second\n"
-                                , "Highest Response Ratio Next (HRRN) Result", MessageBoxButtons.OK, MessageBoxIcon.None);
+                                , "First Come, First Served (FCFS) Result", MessageBoxButtons.OK, MessageBoxIcon.None);
+
+                // add results on the dashboard
+                listView1.Items.Add("\n");
+                listView1.Items.Add("AWT: " + awt.ToString("0.0##") + " ms");
+                listView1.Items.Add("ATT: " + average_turnaround_time.ToString("0.0##") + " ms");
+                listView1.Items.Add("CPU Utilization: " + CPU_utilization.ToString("0.0##") + " %");
+                listView1.Items.Add("Throughput: " + throughput.ToString("0.0##") + " processes/second");
             }
             else if (result == DialogResult.No)
             {
@@ -445,7 +528,7 @@ namespace CpuSchedulingWinForms
             }
         }
 
-        public static void sjfAlgorithm(string userInput)
+        public static void sjfAlgorithm(string userInput, System.Windows.Forms.ListView listView1)
         {
             // start to measure CPU utilization
             PerformanceCounter cpu = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
@@ -508,6 +591,17 @@ namespace CpuSchedulingWinForms
                                 // turnaround time = [waiting time] + [burst time]
                                 turnaround_time_array[num] = wtp[num] + bp[x];
 
+                                // add a row with information to the dashboard
+                                var item = new ListViewItem();
+                                item.Text = "Process " + x;
+                                item.SubItems.Add(Convert.ToString("-"));                       // arrival time
+                                item.SubItems.Add(Convert.ToString(bp[x]));                   // burst time
+                                item.SubItems.Add(Convert.ToString(turnaround_time_array[num]));// completion time
+                                item.SubItems.Add(Convert.ToString(wtp[num]));                  // waiting time
+                                item.SubItems.Add(Convert.ToString(turnaround_time_array[num]));// turnaround time
+                                item.SubItems.Add(Convert.ToString("-"));                       // quantum time
+                                listView1.Items.Add(item);
+
                                 bp[x] = 0;
                                 found = true;
                             }
@@ -525,6 +619,17 @@ namespace CpuSchedulingWinForms
 
                                 // turnaround time = [waiting time] + [burst time]
                                 turnaround_time_array[num] = wtp[num] + bp[x];
+
+                                // add a row with information to the dashboard
+                                var item = new ListViewItem();
+                                item.Text = "Process " + x;
+                                item.SubItems.Add(Convert.ToString("-"));                       // arrival time
+                                item.SubItems.Add(Convert.ToString(bp[x]));                     // burst time
+                                item.SubItems.Add(Convert.ToString(turnaround_time_array[num]));// completion time
+                                item.SubItems.Add(Convert.ToString(wtp[num]));                  // waiting time
+                                item.SubItems.Add(Convert.ToString(turnaround_time_array[num]));// turnaround time
+                                item.SubItems.Add(Convert.ToString("-"));                       // quantum time
+                                listView1.Items.Add(item);
 
                                 bp[x] = 0;
                                 found = true;
@@ -549,6 +654,9 @@ namespace CpuSchedulingWinForms
 
                 average_turnaround_time /= np;
 
+                // collect CPU utilization
+                double CPU_utilization = (double)cpu.NextValue();
+
                 // calculate throughput (Processes per Second)
                 // - throughput = [total number of completed processes] / [overall completed time]
                 // - overall, "last process' turnaround time" will be "completed time" since this algorithm does not take arrival time for each process
@@ -563,13 +671,20 @@ namespace CpuSchedulingWinForms
                 MessageBox.Show("** Shortest Job First (SJF) with " + np + " processes **\n\n"
                                 + "Average Waiting Time (AWT) = " + awt.ToString("0.0##") + " ms\n\n"
                                 + "Average Turnaround Time (ATT) = " + average_turnaround_time.ToString("0.0##") + " ms\n\n"
-                                + "CPU Utilization = " + ((double)cpu.NextValue()).ToString("0.0##") + " %\n\n"
+                                + "CPU Utilization = " + CPU_utilization.ToString("0.0##") + " %\n\n"
                                 + "Throughput = " + throughput.ToString("0.0##") + " processes/second\n"
                                 , "Shortest Job First (SJF) Result", MessageBoxButtons.OK, MessageBoxIcon.None);
+
+                // add results on the dashboard
+                listView1.Items.Add("\n");
+                listView1.Items.Add("AWT: " + awt.ToString("0.0##") + " ms");
+                listView1.Items.Add("ATT: " + average_turnaround_time.ToString("0.0##") + " ms");
+                listView1.Items.Add("CPU Utilization: " + CPU_utilization.ToString("0.0##") + " %");
+                listView1.Items.Add("Throughput: " + throughput.ToString("0.0##") + " processes/second");
             }
         }
 
-        public static void priorityAlgorithm(string userInput)
+        public static void priorityAlgorithm(string userInput, System.Windows.Forms.ListView listView1)
         {
             // start to measure CPU utilization
             PerformanceCounter cpu = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
@@ -644,6 +759,17 @@ namespace CpuSchedulingWinForms
                                 // turnaround time = [waiting time] + [burst time]
                                 turnaround_time_array[num] = wtp[num] + bp[x];
 
+                                // add a row with information to the dashboard
+                                var item = new ListViewItem();
+                                item.Text = "Process " + x;
+                                item.SubItems.Add(Convert.ToString("-"));                       // arrival time
+                                item.SubItems.Add(Convert.ToString(bp[x]));                     // burst time
+                                item.SubItems.Add(Convert.ToString(turnaround_time_array[num]));// completion time
+                                item.SubItems.Add(Convert.ToString(wtp[num]));                  // waiting time
+                                item.SubItems.Add(Convert.ToString(turnaround_time_array[num]));// turnaround time
+                                item.SubItems.Add(Convert.ToString("-"));                       // quantum time
+                                listView1.Items.Add(item);
+
                                 temp = x;
                                 p[x] = 0;
                                 found = true;
@@ -663,6 +789,17 @@ namespace CpuSchedulingWinForms
 
                                 // turnaround time = [waiting time] + [burst time]
                                 turnaround_time_array[num] = wtp[num] + bp[x];
+
+                                // add a row with information to the dashboard
+                                var item = new ListViewItem();
+                                item.Text = "Process " + x;
+                                item.SubItems.Add(Convert.ToString("-"));                       // arrival time
+                                item.SubItems.Add(Convert.ToString(bp[x]));                     // burst time
+                                item.SubItems.Add(Convert.ToString(turnaround_time_array[num]));// completion time
+                                item.SubItems.Add(Convert.ToString(wtp[num]));                  // waiting time
+                                item.SubItems.Add(Convert.ToString(turnaround_time_array[num]));// turnaround time
+                                item.SubItems.Add(Convert.ToString("-"));                       // quantum time
+                                listView1.Items.Add(item);
 
                                 temp = x;
                                 p[x] = 0;
@@ -691,6 +828,9 @@ namespace CpuSchedulingWinForms
 
                 average_turnaround_time /= np;
 
+                // collect CPU utilization
+                double CPU_utilization = (double)cpu.NextValue();
+
                 // calculate throughput (Processes per Second)
                 // - throughput = [total number of completed processes] / [overall completed time]
                 // - overall, "last process' turnaround time" will be "completed time" since this algorithm does not take arrival time for each process
@@ -702,12 +842,19 @@ namespace CpuSchedulingWinForms
                 // - average turnaround time (milli-seconds)
                 // - CPU Utilization (%)
                 // - Throughput (processes / second)
-                MessageBox.Show("** Shortest Job First (SJF) with " + np + " processes **\n\n"
+                MessageBox.Show("** Priority Scheduling with " + np + " processes **\n\n"
                                 + "Average Waiting Time (AWT) = " + awt.ToString("0.0##") + " ms\n\n"
                                 + "Average Turnaround Time (ATT) = " + average_turnaround_time.ToString("0.0##") + " ms\n\n"
-                                + "CPU Utilization = " + ((double)cpu.NextValue()).ToString("0.0##") + " %\n\n"
+                                + "CPU Utilization = " + CPU_utilization.ToString("0.0##") + " %\n\n"
                                 + "Throughput = " + throughput.ToString("0.0##") + " processes/second\n"
-                                , "Shortest Job First (SJF) Result", MessageBoxButtons.OK, MessageBoxIcon.None);
+                                , "Priority Scheduling Result", MessageBoxButtons.OK, MessageBoxIcon.None);
+
+                // add results on the dashboard
+                listView1.Items.Add("\n");
+                listView1.Items.Add("AWT: " + awt.ToString("0.0##") + " ms");
+                listView1.Items.Add("ATT: " + average_turnaround_time.ToString("0.0##") + " ms");
+                listView1.Items.Add("CPU Utilization: " + CPU_utilization.ToString("0.0##") + " %");
+                listView1.Items.Add("Throughput: " + throughput.ToString("0.0##") + " processes/second");
             }
             else
             {
@@ -715,7 +862,7 @@ namespace CpuSchedulingWinForms
             }
         }
 
-        public static void roundRobinAlgorithm(string userInput)
+        public static void roundRobinAlgorithm(string userInput, System.Windows.Forms.ListView listView1)
         {
             // start to measure CPU utilization
             PerformanceCounter cpu = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
@@ -786,6 +933,17 @@ namespace CpuSchedulingWinForms
                         turnaroundTime = (turnaroundTime + total - arrivalTime[i]);
                         waitTime = (waitTime + total - arrivalTime[i] - burstTime[i]);                        
                         counter = 0;
+
+                        // add a row with information to the dashboard
+                        var item = new ListViewItem();
+                        item.Text = "Process " + i;
+                        item.SubItems.Add(Convert.ToString(arrivalTime[i]));    // arrival time
+                        item.SubItems.Add(Convert.ToString(burstTime[i]));      // burst time
+                        item.SubItems.Add(Convert.ToString(total));             // completion time
+                        item.SubItems.Add(Convert.ToString(waitTime));          // waiting time
+                        item.SubItems.Add(Convert.ToString(turnaroundTime));    // turnaround time
+                        item.SubItems.Add(Convert.ToString(timeQuantum));       // quantum time
+                        listView1.Items.Add(item);
                     }
                     if (i == np - 1)
                     {
@@ -805,6 +963,9 @@ namespace CpuSchedulingWinForms
                 //MessageBox.Show("Average wait time for " + np + " processes: " + averageWaitTime + " sec(s)", "", MessageBoxButtons.OK);
                 //MessageBox.Show("Average turnaround time for " + np + " processes: " + averageTurnaroundTime + " sec(s)", "", MessageBoxButtons.OK);
 
+                // collect CPU utilization
+                double CPU_utilization = (double)cpu.NextValue();
+
                 // calculate throughput (Processes per Second)
                 // - throughput = [total number of completed processes] / [overall completed time]
                 // - overall, "total" will be "completed time" since this variable tracks completion time
@@ -819,9 +980,16 @@ namespace CpuSchedulingWinForms
                 MessageBox.Show("** Round Robin (RR) with " + np + " processes **\n\n"
                                 + "Average Waiting Time (AWT) = " + averageWaitTime.ToString("0.0##") + " ms\n\n"
                                 + "Average Turnaround Time (ATT) = " + averageTurnaroundTime.ToString("0.0##") + " ms\n\n"
-                                + "CPU Utilization = " + ((double)cpu.NextValue()).ToString("0.0##") + " %\n\n"
+                                + "CPU Utilization = " + CPU_utilization.ToString("0.0##") + " %\n\n"
                                 + "Throughput = " + throughput.ToString("0.0##") + " processes/second\n"
                                 , "Round Robin (RR) Result", MessageBoxButtons.OK, MessageBoxIcon.None);
+
+                // add results on the dashboard
+                listView1.Items.Add("\n");
+                listView1.Items.Add("AWT: " + averageWaitTime.ToString("0.0##") + " ms");
+                listView1.Items.Add("ATT: " + averageTurnaroundTime.ToString("0.0##") + " ms");
+                listView1.Items.Add("CPU Utilization: " + CPU_utilization.ToString("0.0##") + " %");
+                listView1.Items.Add("Throughput: " + throughput.ToString("0.0##") + " processes/second");
             }
         }
     }
