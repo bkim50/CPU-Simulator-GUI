@@ -6,6 +6,9 @@
  *  
  *  For this file (CpuScheduler.cs), 
  *  - add new click events for two advanced scheduling algorithms (SRTF and HRRN)
+ *  - add new method to ensure that every inputs for algorithms are numeric.
+ *  - add new condition for "btnFCFS_Click", "btnSJF_Click", "btnPriority_Click", and "btnRoundRobin_Click" to check if the input is numeric
+ *  - add new columns on the dashboard to display more information for each process
  */
 
 using System;
@@ -30,15 +33,32 @@ namespace CpuSchedulingWinForms
             InitializeComponent();
         }
 
+        // isNumeric method to gracefully handle an input that contains non-numeric value
+        private bool isNumeric(string input)
+        {
+            foreach (char c in input)
+            {
+                if (!char.IsDigit(c))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         /*  Add New Click Events for SRTF and HRRN algorithms    */
 
         // click event for Shortest Remaining Time First (SRTF)
         // adapt click event that is already existed for other initial algorithms
         private void btnSRTF_Click(object sender, EventArgs e)
         {
-            if (txtProcess.Text != "")
+            if (txtProcess.Text != "" && isNumeric(txtProcess.Text))
             {
-                Algorithms.srtfAlgorithm(txtProcess.Text);
+                listView1.Clear();
+                listView1.View = View.Details;
+
+                Algorithms.srtfAlgorithm(txtProcess.Text, listView1);
                 int numberOfProcess = Int16.Parse(txtProcess.Text);
                 if (numberOfProcess <= 10)
                 {
@@ -54,21 +74,24 @@ namespace CpuSchedulingWinForms
                     this.progressBar2.Increment(38); //memory progress bar
                     this.progressBar2.SetState(3);
                 }
-                
-                listView1.Clear();
-                listView1.View = View.Details;
 
                 listView1.Columns.Add("Process ID", 150, HorizontalAlignment.Center);
+                listView1.Columns.Add("Arrival Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Burst Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Completion Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Waiting Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Turnaround Time", 200, HorizontalAlignment.Center);
                 listView1.Columns.Add("Quantum Time", 100, HorizontalAlignment.Center);
 
-                for (int i = 0; i < numberOfProcess; i++)
-                {
-                    //listBoxProcess.Items.Add(" Process " + (i + 1));
-                    var item = new ListViewItem();
-                    item.Text = "Process " + (i + 1);
-                    item.SubItems.Add("-");
-                    listView1.Items.Add(item);
-                }
+                //for (int i = 0; i < numberOfProcess; i++)
+                //{
+                //    //listBoxProcess.Items.Add(" Process " + (i + 1));
+                //    var item = new ListViewItem();
+                //    item.Text = "Process " + (i + 1);
+                //    item.SubItems.Add("-");
+                //    listView1.Items.Add(item);
+                //}
+
                 //listBoxProcess.Items.Add("\n");
                 //listBoxProcess.Items.Add(" Total number of processes executed: " + numberOfProcess);
                 listView1.Items.Add("\n");
@@ -77,6 +100,7 @@ namespace CpuSchedulingWinForms
             else
             {
                 MessageBox.Show("Enter number of processes", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txtProcess.SelectAll();
                 txtProcess.Focus();
             }
         }
@@ -85,9 +109,12 @@ namespace CpuSchedulingWinForms
         // adapt click event that is already existed for other initial algorithms
         private void btnHRRN_Click(object sender, EventArgs e)
         {
-            if (txtProcess.Text != "")
+            if (txtProcess.Text != "" && isNumeric(txtProcess.Text))
             {
-                Algorithms.hrrnAlgorithm(txtProcess.Text);
+                listView1.Clear();
+                listView1.View = View.Details;
+
+                Algorithms.hrrnAlgorithm(txtProcess.Text, listView1);
                 int numberOfProcess = Int16.Parse(txtProcess.Text);
                 if (numberOfProcess <= 10)
                 {
@@ -103,19 +130,22 @@ namespace CpuSchedulingWinForms
                     this.progressBar2.Increment(38); //memory progress bar
                     this.progressBar2.SetState(3);   //memory color progress bar
                 }
-                listView1.Clear();
-                listView1.View = View.Details;
 
                 listView1.Columns.Add("Process ID", 150, HorizontalAlignment.Center);
+                listView1.Columns.Add("Arrival Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Burst Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Completion Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Waiting Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Turnaround Time", 200, HorizontalAlignment.Center);
                 listView1.Columns.Add("Quantum Time", 100, HorizontalAlignment.Center);
 
-                for (int i = 0; i < numberOfProcess; i++)
-                {
-                    var item = new ListViewItem();
-                    item.Text = "Process " + (i + 1);
-                    item.SubItems.Add("-");
-                    listView1.Items.Add(item);
-                }
+                //for (int i = 0; i < numberOfProcess; i++)
+                //{
+                //    var item = new ListViewItem();
+                //    item.Text = "Process " + (i + 1);
+                //    item.SubItems.Add("-");
+                //    listView1.Items.Add(item);
+                //}
 
                 listView1.Items.Add("\n");
                 listView1.Items.Add("CPU handles : " + numberOfProcess);
@@ -123,6 +153,7 @@ namespace CpuSchedulingWinForms
             else
             {
                 MessageBox.Show("Enter number of processes", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txtProcess.SelectAll();
                 txtProcess.Focus();
             }
         }
@@ -156,9 +187,12 @@ namespace CpuSchedulingWinForms
 
         private void btnFCFS_Click(object sender, EventArgs e)
         {
-            if (txtProcess.Text != "")
+            if (txtProcess.Text != "" && isNumeric(txtProcess.Text))
             {
-                Algorithms.fcfsAlgorithm(txtProcess.Text);
+                listView1.Clear();
+                listView1.View = View.Details;
+
+                Algorithms.fcfsAlgorithm(txtProcess.Text, listView1);
                 int numberOfProcess = Int16.Parse(txtProcess.Text);
                 if (numberOfProcess <= 10)
                 {
@@ -175,20 +209,22 @@ namespace CpuSchedulingWinForms
                     this.progressBar2.SetState(3);
                 }
 
-                listView1.Clear();
-                listView1.View = View.Details;
-                
                 listView1.Columns.Add("Process ID", 150, HorizontalAlignment.Center);
+                listView1.Columns.Add("Arrival Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Burst Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Completion Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Waiting Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Turnaround Time", 200, HorizontalAlignment.Center);
                 listView1.Columns.Add("Quantum Time", 100, HorizontalAlignment.Center);
 
-                for (int i = 0; i < numberOfProcess; i++)
-                {
-                    //listBoxProcess.Items.Add(" Process " + (i + 1));
-                    var item = new ListViewItem();
-                    item.Text = "Process " + (i + 1);
-                    item.SubItems.Add("-");
-                    listView1.Items.Add(item);
-                }
+                //for (int i = 0; i < numberOfProcess; i++)
+                //{
+                //    //listBoxProcess.Items.Add(" Process " + (i + 1));
+                //    var item = new ListViewItem();
+                //    item.Text = "Process " + (i + 1);
+                //    item.SubItems.Add("-");
+                //    listView1.Items.Add(item);
+                //}
                 //listBoxProcess.Items.Add("\n");
                 //listBoxProcess.Items.Add(" Total number of processes executed: " + numberOfProcess);
                 listView1.Items.Add("\n");
@@ -197,15 +233,19 @@ namespace CpuSchedulingWinForms
             else
             {
                 MessageBox.Show("Enter number of processes", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txtProcess.SelectAll();
                 txtProcess.Focus();
             }
         }
 
         private void btnSJF_Click(object sender, EventArgs e)
         {
-            if (txtProcess.Text != "")
+            if (txtProcess.Text != "" && isNumeric(txtProcess.Text))
             {
-                Algorithms.sjfAlgorithm(txtProcess.Text);
+                listView1.Clear();
+                listView1.View = View.Details;
+
+                Algorithms.sjfAlgorithm(txtProcess.Text, listView1);
                 int numberOfProcess = Int16.Parse(txtProcess.Text);
                 if (numberOfProcess <= 10)
                 {
@@ -222,35 +262,41 @@ namespace CpuSchedulingWinForms
                     this.progressBar2.SetState(3);
                 }
 
-                listView1.Clear();
-                listView1.View = View.Details;
-               
                 listView1.Columns.Add("Process ID", 150, HorizontalAlignment.Center);
+                listView1.Columns.Add("Arrival Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Burst Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Completion Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Waiting Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Turnaround Time", 200, HorizontalAlignment.Center);
                 listView1.Columns.Add("Quantum Time", 100, HorizontalAlignment.Center);
 
-                for (int i = 0; i < numberOfProcess; i++)
-                {
-                    var item = new ListViewItem();
-                    item.Text = "Process " + (i + 1);
-                    item.SubItems.Add("-");
-                    listView1.Items.Add(item);
-                }
-                
+                //for (int i = 0; i < numberOfProcess; i++)
+                //{
+                //    var item = new ListViewItem();
+                //    item.Text = "Process " + (i + 1);
+                //    item.SubItems.Add("-");
+                //    listView1.Items.Add(item);
+                //}
+
                 listView1.Items.Add("\n");
                 listView1.Items.Add("CPU handles: " + numberOfProcess);
             }
             else
             {
                 MessageBox.Show("Enter number of processes", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txtProcess.SelectAll();
                 txtProcess.Focus();
             }
         }
 
         private void btnPriority_Click(object sender, EventArgs e)
         {
-            if (txtProcess.Text != "")
+            if (txtProcess.Text != "" && isNumeric(txtProcess.Text))
             {
-                Algorithms.priorityAlgorithm(txtProcess.Text);
+                listView1.Clear();
+                listView1.View = View.Details;
+
+                Algorithms.priorityAlgorithm(txtProcess.Text, listView1);
                 int numberOfProcess = Int16.Parse(txtProcess.Text);
                 if (numberOfProcess <= 10)
                 {
@@ -266,19 +312,22 @@ namespace CpuSchedulingWinForms
                     this.progressBar2.Increment(38); //memory progress bar
                     this.progressBar2.SetState(3);   //memory color progress bar
                 }
-                listView1.Clear();
-                listView1.View = View.Details;
 
                 listView1.Columns.Add("Process ID", 150, HorizontalAlignment.Center);
+                listView1.Columns.Add("Arrival Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Burst Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Completion Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Waiting Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Turnaround Time", 200, HorizontalAlignment.Center);
                 listView1.Columns.Add("Quantum Time", 100, HorizontalAlignment.Center);
 
-                for (int i = 0; i < numberOfProcess; i++)
-                {
-                    var item = new ListViewItem();
-                    item.Text = "Process " + (i + 1);
-                    item.SubItems.Add("-");
-                    listView1.Items.Add(item);
-                }
+                //for (int i = 0; i < numberOfProcess; i++)
+                //{
+                //    var item = new ListViewItem();
+                //    item.Text = "Process " + (i + 1);
+                //    item.SubItems.Add("-");
+                //    listView1.Items.Add(item);
+                //}
 
                 listView1.Items.Add("\n");
                 listView1.Items.Add("CPU handles : " + numberOfProcess);
@@ -286,6 +335,7 @@ namespace CpuSchedulingWinForms
             else
             {
                 MessageBox.Show("Enter number of processes", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txtProcess.SelectAll();
                 txtProcess.Focus();
             }
         }
@@ -409,9 +459,12 @@ namespace CpuSchedulingWinForms
 
         private void btnRoundRobin_Click(object sender, EventArgs e)
         {
-            if (txtProcess.Text != "")
+            if (txtProcess.Text != "" && isNumeric(txtProcess.Text))
             {
-                Algorithms.roundRobinAlgorithm(txtProcess.Text);
+                listView1.Clear();
+                listView1.View = View.Details;
+
+                Algorithms.roundRobinAlgorithm(txtProcess.Text, listView1);
                 int numberOfProcess = Int16.Parse(txtProcess.Text);
                 if (numberOfProcess <= 10)
                 {
@@ -427,20 +480,23 @@ namespace CpuSchedulingWinForms
                     this.progressBar2.Increment(38); //memory progress bar
                     this.progressBar2.SetState(3);   //memory color progress bar
                 }
-                string quantumTime = Helper.QuantumTime;
-                listView1.Clear();
-                listView1.View = View.Details;
+                //string quantumTime = Helper.QuantumTime;
 
                 listView1.Columns.Add("Process ID", 150, HorizontalAlignment.Center);
+                listView1.Columns.Add("Arrival Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Burst Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Completion Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Waiting Time", 200, HorizontalAlignment.Center);
+                listView1.Columns.Add("Turnaround Time", 200, HorizontalAlignment.Center);
                 listView1.Columns.Add("Quantum Time", 100, HorizontalAlignment.Center);
 
-                for (int i = 0; i < numberOfProcess; i++)
-                {
-                    var item = new ListViewItem();
-                    item.Text = "Process " + (i + 1);
-                    item.SubItems.Add(quantumTime);
-                    listView1.Items.Add(item);
-                }
+                //for (int i = 0; i < numberOfProcess; i++)
+                //{
+                //    var item = new ListViewItem();
+                //    item.Text = "Process " + (i + 1);
+                //    item.SubItems.Add(quantumTime);
+                //    listView1.Items.Add(item);
+                //}
 
                 listView1.Items.Add("\n");
                 listView1.Items.Add("CPU handles: " + numberOfProcess);
@@ -448,6 +504,7 @@ namespace CpuSchedulingWinForms
             else
             {
                 MessageBox.Show("Enter number of processes", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txtProcess.SelectAll();
                 txtProcess.Focus();
             }
         }
