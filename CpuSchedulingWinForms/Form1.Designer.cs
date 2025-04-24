@@ -1,4 +1,14 @@
-﻿namespace CpuSchedulingWinForms
+﻿/*
+ *  Project Two: CPU Scheduler
+ *  Name: Brien Kim
+ *  Course: CS 3502 Section W03
+ *  Net ID: bkim50
+ *  
+ *  For this file (Form1.Designer.cs):
+ *  - add ListView
+ */
+
+namespace CpuSchedulingWinForms
 {
     partial class Form1
     {
@@ -136,6 +146,9 @@
         private System.Windows.Forms.Button btnPriority;
         private System.Windows.Forms.Label label1;
         public System.Windows.Forms.TextBox txtProcess;
+
+        // add ListView
+        private System.Windows.Forms.ListView listView1;
     }
 }
 
