@@ -75,7 +75,7 @@ namespace CpuSchedulingWinForms
         public static void srtfAlgorithm(string userInput, System.Windows.Forms.ListView listView1)
         {
             // start to measure CPU utilization
-            PerformanceCounter cpu = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
+            PerformanceCounter cpu = new PerformanceCounter("Processor", "% Processor Time", "_Total");
             dynamic startValue = cpu.NextValue();
 
             // initialize number of process and an array to store processes
@@ -238,7 +238,7 @@ namespace CpuSchedulingWinForms
         public static void hrrnAlgorithm(string userInput, System.Windows.Forms.ListView listView1)
         {
             // start to measure CPU utilization
-            PerformanceCounter cpu = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
+            PerformanceCounter cpu = new PerformanceCounter("Processor", "% Processor Time", "_Total");
             dynamic startValue = cpu.NextValue();
 
             // initialize number of process and an array to store processes
@@ -414,7 +414,7 @@ namespace CpuSchedulingWinForms
         public static void fcfsAlgorithm(string userInput, System.Windows.Forms.ListView listView1)
         {
             // start to measure CPU utilization
-            PerformanceCounter cpu = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
+            PerformanceCounter cpu = new PerformanceCounter("Processor", "% Processor Time", "_Total");
             dynamic startValue = cpu.NextValue();
 
             int np = Convert.ToInt16(userInput);
@@ -531,7 +531,7 @@ namespace CpuSchedulingWinForms
         public static void sjfAlgorithm(string userInput, System.Windows.Forms.ListView listView1)
         {
             // start to measure CPU utilization
-            PerformanceCounter cpu = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
+            PerformanceCounter cpu = new PerformanceCounter("Processor", "% Processor Time", "_Total");
             dynamic startValue = cpu.NextValue();
 
             int np = Convert.ToInt16(userInput);
@@ -687,7 +687,7 @@ namespace CpuSchedulingWinForms
         public static void priorityAlgorithm(string userInput, System.Windows.Forms.ListView listView1)
         {
             // start to measure CPU utilization
-            PerformanceCounter cpu = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
+            PerformanceCounter cpu = new PerformanceCounter("Processor", "% Processor Time", "_Total");
             dynamic startValue = cpu.NextValue();
 
             int np = Convert.ToInt16(userInput);
@@ -865,7 +865,7 @@ namespace CpuSchedulingWinForms
         public static void roundRobinAlgorithm(string userInput, System.Windows.Forms.ListView listView1)
         {
             // start to measure CPU utilization
-            PerformanceCounter cpu = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
+            PerformanceCounter cpu = new PerformanceCounter("Processor", "% Processor Time", "_Total");
             dynamic startValue = cpu.NextValue();
 
             int np = Convert.ToInt16(userInput);
